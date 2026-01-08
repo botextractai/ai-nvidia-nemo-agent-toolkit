@@ -1,0 +1,98 @@
+general:
+  telemetry:
+    tracing:
+      phoenix:
+        _type: phoenix
+        endpoint: http://localhost:6006/v1/traces
+        project: climate_analyzer
+
+llms:
+  climate_llm:
+    _type: openai
+    model_name: gpt-5-mini
+    base_url: https://api.openai.com/v1/
+    api_key: ${OPENAI_API_KEY}
+    max_tokens: 2048
+  
+  calculator_llm:
+    _type: openai
+    model_name: gpt-5-mini
+    base_url: https://api.openai.com/v1/
+    api_key: ${OPENAI_API_KEY}
+    max_tokens: 1024
+  
+  # NAT RAGAS evaluation requires a judge LLM that supports the "temperature" setting ("gpt-5-mini" does not)
+  eval_llm:
+    _type: openai
+    model_name: gpt-4.1-mini
+    base_url: https://api.openai.com/v1/
+    api_key: ${OPENAI_API_KEY}
+    max_tokens: 2048
+
+functions:
+  list_countries:
+    _type: climate_analyzer/list_countries
+    description: "Calculate temperature statistics globally or for a specific country, with optional year filtering"
+  
+  calculate_statistics:
+    _type: climate_analyzer/calculate_statistics
+    description: "Calculate temperature statistics globally or for a specific country, with optional year filtering"
+  
+  filter_by_country:
+    _type: climate_analyzer/filter_by_country
+    description: "Get information about climate data for a specific country"
+  
+  find_extreme_years:
+    _type: climate_analyzer/find_extreme_years
+    description: "Find the warmest or coldest years in the dataset"
+  
+  create_visualization:
+    _type: climate_analyzer/create_visualization
+    description: "Create visualizations including automatic top 5 countries by warming trend (country_comparison plot)"
+  
+  station_statistics:
+    _type: climate_analyzer/station_statistics
+    description: "Get statistics on climate stations used in the data"
+  
+  calculator_agent:
+    _type: climate_analyzer/calculator_agent
+    description: >
+      USE THIS TOOL for any mathematical calculations, computations, or numerical operations.
+      This tool performs compound growth rates (CAGR), percentage changes, weighted averages,
+      future projections, forecasting, and multi-step mathematical calculations.
+      ALWAYS use this tool when asked to calculate, compute, solve, project, forecast,
+      determine future values, find growth rates, calculate percentages, or perform any arithmetic operations.
+
+workflow:
+  _type: react_agent
+  tool_names:
+    - list_countries
+    - calculate_statistics
+    - filter_by_country
+    - find_extreme_years
+    - create_visualization
+    - station_statistics
+    - calculator_agent
+  llm_name: climate_llm
+  verbose: true
+  max_iterations: 5
+  parse_agent_response_max_retries: 2
+  max_tool_calls: 30
+
+# Evaluation configuration
+eval:
+  general:
+    output:
+      dir: evaluation_results
+      cleanup: false  # Keep results for inspection
+    dataset:
+      _type: json
+      file_path: climate_analyzer/data/simple_eval.json
+  
+  evaluators:
+    # Check if the answer is accurate
+    answer_accuracy:
+      _type: ragas
+      metric: AnswerAccuracy
+      llm_name: eval_llm
+      verbose: true

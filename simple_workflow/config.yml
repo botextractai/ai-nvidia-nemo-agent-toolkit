@@ -1,0 +1,17 @@
+# Simple workflow without tools
+
+llms:
+  climate_llm:
+    _type: openai
+    model_name: gpt-5-mini
+    base_url: https://api.openai.com/v1/
+    api_key: ${OPENAI_API_KEY}
+    max_tokens: 2048
+
+workflow:
+  _type: chat_completion
+  llm_name: climate_llm
+  system_prompt: |
+    You are a knowledgeable climate science assistant. You help users understand 
+    climate data, weather patterns, and global temperature trends. Be accurate, 
+    informative, and cite scientific consensus when appropriate.

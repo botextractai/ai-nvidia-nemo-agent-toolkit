@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-nvidia-nemo-agent-toolkit"
+version = "0.1.0"
+description = "NVIDIA NeMo Agent Toolkit example with climate analyzer"
+dependencies = [
+    # Core NVIDIA NeMo Agent Toolkit (NAT)
+    "nvidia-nat==1.3.0",
+    "nvidia-nat-langchain==1.3.0",
+    "nvidia-nat-phoenix==1.3.0",
+    # Telemetry via local Arize Phoenix server
+    "arize-phoenix==12.16.0",
+    # Required for API requests through the web user interface
+    "requests==2.32.5",
+    # Required for loading environment variables from .env file
+    "python-dotenv==1.1.1",
+    # Required for climate_analyzer data processing and visualizations
+    # Note: pandas is included in arize-phoenix, matplotlib is included in seaborn
+    "seaborn==0.13.2",
+]
+
+# Note: Dask is not included due to Microsoft Windows compatibility issues
+# 
+# The issue: NAT's code calls os.setsid() (Unix-only) when setting up Dask workers.
+# This is a bug in NAT, not Dask. Dask itself has been Microsoft Windows-compatible since v0.13.0 (2017).
+# 
+# The basic chat_completion workflow works fine without Dask on Microsoft Windows.
+# If you need async/evaluation features, use Linux / Apple macOS where os.setsid() is available.
+
+[tool.setuptools.packages.find]
+where = ["climate_analyzer/src"]
+
+[project.entry-points.'nat.components']
+climate_analyzer = "climate_analyzer.register"
